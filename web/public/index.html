@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#10201a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Googly Survival</title>
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="stylesheet" href="style.css">
+<script type="importmap">{ "imports": { "three": "/three/three.module.js", "three/addons/": "/three/addons/" } }</script>
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<!-- title -->
+<section id="scr-title" class="screen">
+  <div class="card">
+    <h1><span class="g">GOOGLY</span> <span class="s">SURVIVAL</span></h1>
+    <p class="sub">4 googlies · 4 wild maps · who ends up with the most money and the best shelter?</p>
+    <div id="invite" class="banner hidden"></div>
+    <input id="nm" maxlength="14" placeholder="Your name" autocomplete="off">
+    <div id="swatches"></div>
+    <div class="coinrow"><span class="coins"><i class="star"></i><b id="t-stars">0</b> stars</span><button id="b-shop" class="gold">🛍 SHOP · skins &amp; pets</button></div>
+    <button id="b-solo" class="big green wide">▶ PLAY SOLO<small>you + 3 computer googlies · starts right away</small></button>
+    <button id="b-continue" class="big brown wide hidden">↻ CONTINUE SOLO GAME<small id="continue-sub"></small></button>
+    <button id="b-online" class="big blue wide">PLAY ONLINE<small>optional · lobbies · codes · invite up to 3 friends</small></button>
+    <div class="row"><button id="b-fs" class="grey">⛶ Full screen</button><button id="b-music" class="grey">♪ Music</button><button id="b-sfx" class="grey">🔊 Sound</button><button id="b-help" class="grey">? How to play</button></div>
+  </div>
+</section>
+
+<!-- solo setup -->
+<section id="scr-solo" class="screen hidden">
+  <div class="card wide">
+    <h2>PLAY SOLO</h2>
+    <div class="label">PICK A MAP</div>
+    <div id="solo-maps" class="maps"></div>
+    <div class="grid3">
+      <label>Computer googlies <select id="solo-d"><option value="0">Easy</option><option value="1" selected>Normal</option><option value="2">Hard</option></select></label>
+      <label>How long <select id="solo-days"><option value="2">2 days (4 min)</option><option value="3">3 days (6 min)</option><option value="4" selected>4 days (8 min)</option><option value="6">6 days (12 min)</option><option value="8">8 days (16 min)</option></select></label>
+      <label>Storms <select id="solo-storms"><option value="1" selected>On</option><option value="0">Off</option></select></label>
+      <label>Bonking <select id="solo-bonk"><option value="1" selected>On</option><option value="0">Off</option></select></label>
+    </div>
+    <div class="row"><button id="solo-go" class="big green">START</button><button class="back grey">BACK</button></div>
+  </div>
+</section>
+
+<!-- online -->
+<section id="scr-online" class="screen hidden">
+  <div class="card wide">
+    <h2>PLAY ONLINE</h2>
+    <p class="tiny" id="on-status">Connecting to the server…</p>
+    <div class="row"><button id="on-pub" class="green">+ PUBLIC LOBBY</button><button id="on-priv" class="blue">🔒 PRIVATE LOBBY</button></div>
+    <div class="row"><input id="on-code" class="codebox" maxlength="4" placeholder="CODE" autocomplete="off"><button id="on-join" class="gold">JOIN WITH CODE</button></div>
+    <p class="sub">Open lobbies <button id="on-ref" class="mini grey">↻</button></p>
+    <div id="rooms"></div>
+    <div class="row"><button class="back grey">BACK</button></div>
+  </div>
+</section>
+
+<!-- shop -->
+<section id="scr-shop" class="screen hidden">
+  <div class="card shop">
+    <div class="shoptop"><h2>SHOP</h2><span class="coins big"><i class="star"></i><b id="s-stars">0</b></span></div>
+    <div class="seg" id="shop-tab"><button data-v="skins" class="on">SKINS</button><button data-v="pets">PETS</button><button data-v="colors">COLOURS</button></div>
+    <div id="shop-grid"></div>
+    <p class="tiny">Earn stars at the end of every game: 120 for 1st place, 70 for 2nd, bonuses for your shelter, never fainting and awards.</p>
+    <div class="row"><button id="shop-close" class="big green">DONE</button></div>
+  </div>
+</section>
+
+<!-- lobby panel: walk around Base Camp while you wait -->
+<div id="lobbyui" class="hidden">
+  <div class="lp">
+    <div class="lobbytop">
+      <div><small>LOBBY CODE</small><div id="lb-code" class="bigcode">----</div></div>
+      <div class="col"><button id="lb-copy" class="gold mini2">🔗 Copy invite</button><button id="lb-share" class="grey mini2 hidden">Share…</button></div>
+    </div>
+    <div class="label">GOOGLIES <small id="lb-count"></small></div>
+    <div id="lb-players"></div>
+    <div id="lb-summary" class="summary hidden"></div>
+    <div id="lb-hostctl">
+      <div class="label">MAP</div>
+      <div id="lb-maps" class="maps small"></div>
+      <div class="grid2">
+        <label>How long <select id="lb-days"><option value="2">2 days</option><option value="3">3 days</option><option value="4">4 days</option><option value="6">6 days</option><option value="8">8 days</option></select></label>
+        <label>CPU difficulty <select id="lb-diff"><option value="0">Easy</option><option value="1">Normal</option><option value="2">Hard</option></select></label>
+        <label>Fill empty spots <select id="lb-cpus"><option value="1">With CPUs</option><option value="0">Nobody</option></select></label>
+        <label>Storms <select id="lb-storms"><option value="1">On</option><option value="0">Off</option></select></label>
+        <label>Bonking <select id="lb-bonk"><option value="1">On</option><option value="0">Off</option></select></label>
+      </div>
+      <label class="chk"><input type="checkbox" id="lb-pub"> Show in the public lobby list</label>
+    </div>
+    <div id="lb-wait" class="tiny"></div>
+    <div id="lb-chat"><div id="lb-log"></div><form id="lb-form"><input id="lb-msg" maxlength="140" placeholder="Say something… (Enter)" autocomplete="off"><button class="grey">Send</button></form></div>
+    <div class="row"><button id="lb-start" class="big green">START GAME</button></div>
+    <div class="row"><button id="lb-shop" class="gold">🛍 SHOP</button><button id="lb-leave" class="grey">LEAVE</button><button id="lb-hide" class="grey">◀ Hide panel</button></div>
+  </div>
+  <button id="lb-show" class="blue hidden">LOBBY ▶</button>
+  <div id="lb-hint" class="tiny">WASD walk · Space jump · drag the screen to look · T or Enter to chat · bounce on the trampolines!</div>
+</div>
+
+<!-- in-game HUD -->
+<div id="hud" class="hidden">
+  <div id="vign"></div>
+  <div id="daypill" class="pill"><small id="dayname">DAY 1 of 4</small><b id="clock">☀️ 1:40</b><div id="daybar"><i></i></div></div>
+  <div id="storm" class="hidden"></div>
+  <div id="money" class="pill"><span class="cash">$<b id="h-coins">0</b></span></div>
+  <div id="minimap" class="pill"><canvas id="mm" width="180" height="180"></canvas></div>
+  <div id="lead" class="pill"></div>
+  <div id="bars" class="pill">
+    <div class="bar" id="b-hp"><span>❤️</span><div><i></i></div><b></b></div>
+    <div class="bar" id="b-food"><span>🍗</span><div><i></i></div><b></b></div>
+    <div class="bar" id="b-water"><span>💧</span><div><i></i></div><b></b></div>
+    <div class="bar temp" id="b-temp"><span>🌡️</span><div><i></i><em></em></div><b></b></div>
+  </div>
+  <div id="pack" class="pill"></div>
+  <div id="tools"></div>
+  <div id="feed"></div>
+  <div id="center"></div>
+  <div id="prompt"></div>
+  <div id="hint"></div>
+  <div id="board" class="hidden"></div>
+  <div id="chatbox"><div id="log"></div><form id="chatform" class="hidden"><input id="chatin" maxlength="140" placeholder="Chat… (Enter to send, Esc to cancel)" autocomplete="off"></form></div>
+  <div id="keys" class="tiny"></div>
+  <div id="faint" class="hidden"><div>😵</div><h2>YOU FAINTED</h2><p id="faint-why"></p><p id="faint-t"></p></div>
+  <div id="saved">SAVED</div>
+  <!-- touch -->
+  <div id="stick" class="touch"><div id="knob"></div></div>
+  <button id="t-act" class="touch tbtn green">USE</button>
+  <button id="t-jump" class="touch tbtn grey">JUMP</button>
+  <button id="t-eat" class="touch tbtn brown">EAT</button>
+  <button id="t-sip" class="touch tbtn blue">SIP</button>
+  <button id="t-bonk" class="touch tbtn red">BONK</button>
+  <button id="t-menu" class="touch tbtn grey">☰</button>
+</div>
+<div id="clickto" class="hidden"><div>CLICK TO PLAY<small>(mouse looks around · Esc for menu)</small></div></div>
+
+<!-- trading post -->
+<div id="trade" class="hidden">
+  <div class="card tradecard">
+    <div class="shoptop"><h2>TRADING POST</h2><span class="cash big">$<b id="tr-coins">0</b></span></div>
+    <p class="tiny" id="tr-day"></p>
+    <div class="label">SELL <small>prices change every day</small></div>
+    <div id="tr-sell"></div>
+    <div class="label">BUY</div>
+    <div id="tr-buy"></div>
+    <div class="row"><button id="tr-close" class="big green">DONE <small>(E)</small></button></div>
+  </div>
+</div>
+
+<!-- pause -->
+<section id="scr-pause" class="screen hidden">
+  <div class="card">
+    <h2>PAUSED</h2>
+    <p class="tiny" id="p-note">The game keeps going while you're in this menu!</p>
+    <label class="slider">Mouse speed <input type="range" id="sens" min="0.2" max="3" step="0.05"></label>
+    <label class="chk"><input type="checkbox" id="invy"> Invert mouse Y</label>
+    <div class="row"><button id="p-music" class="grey">♪ Music</button><button id="p-sfx" class="grey">🔊 Sound</button><button id="p-fs" class="grey">⛶ Full screen</button><button id="p-help" class="grey">? Help</button></div>
+    <div class="row"><button id="p-resume" class="big green">RESUME</button><button id="p-leave" class="red">LEAVE GAME</button></div>
+  </div>
+</section>
+
+<!-- end of game -->
+<section id="scr-end" class="screen hidden">
+  <div class="card wide">
+    <h2 id="end-title">GAME OVER</h2>
+    <p id="end-sub" class="sub"></p>
+    <div id="end-awards"></div>
+    <div id="end-list"></div>
+    <div id="end-stars" class="banner hidden"></div>
+    <p class="tiny" id="end-t"></p>
+    <div class="row"><button id="end-again" class="big green hidden">PLAY AGAIN</button><button id="end-lobby" class="blue hidden">BACK TO CAMP</button><button id="end-leave" class="grey">LEAVE</button></div>
+  </div>
+</section>
+
+<!-- help -->
+<section id="scr-help" class="screen hidden">
+  <div class="card wide help">
+    <h2>HOW TO PLAY</h2>
+    <p><b>Survive</b> in the <b>Frozen Tundra</b>, the <b>Scorched Dunes</b>, the <b>Whispering Woods</b> or the <b>Rocky Peaks</b> with 3 other googlies (computer googlies or your friends). Keep your <b>❤️ health</b> up: eat 🍗, drink 💧 at the lakes, and don't get too cold or too hot 🌡️. Nights are cold, desert days are roasting, and every day a storm rolls in.</p>
+    <p><b>Gather</b>: walk up to a tree, rock, gold ore, berry bush, cactus or fishing hole and <b>hold E</b> (or hold the mouse button). <b>Q</b> eats, <b>R</b> sips from your canteen, <b>E</b> at a lake drinks and fills the canteen.</p>
+    <p><b>Money</b>: sell things at the <b>Trading Post</b> in the middle of the map (press E at the counter). Prices change every day. Buy an axe, a pickaxe, a warm coat, a sun hat or a bigger backpack. Grab 📦 <b>supply crates</b> before anyone else does.</p>
+    <p><b>Shelter</b>: go to your plot (the flag in your colour) and press <b>B</b> to build. There are 5 levels, from a lean-to to a fort or a palace. Inside your shelter you stay warm, heal fast and you're safe from storms.</p>
+    <p><b>Who wins?</b> When the last day ends, the googly with the most <b>money + shelter value</b> wins (fainting costs you). <b>F</b> bonks a googly so they drop something, but they can bonk you back!</p>
+    <p class="tiny">WASD move · Mouse look · Space jump · Shift sprint · E / hold click: gather, drink, trade, open · Q eat · R sip · B build · F / right-click bonk · Tab scores · T chat · M music · Esc menu</p>
+    <div class="row"><button class="back big green">GOT IT</button></div>
+  </div>
+</section>
+
+<div id="toast"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
