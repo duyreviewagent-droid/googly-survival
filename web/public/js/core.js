@@ -42,8 +42,8 @@ const BOT_LOOK = [['polka', 'pup'], ['none', 'duck'], ['camo', 'none'], ['none',
 const DIFF = [
   // rest: chance each decision to sit down for a break; gather: how much slower than you they chop and mine
   { name: 'Easy', speed: 0.78, gather: 3.2, think: 1.4, drink: 22, eat: 22, warm: 18, storms: false, bonk: 0, crate: 10, wander: 0.22, rest: 0.3, tools: 0.08 },
-  { name: 'Normal', speed: 0.86, gather: 2.2, think: 1.0, drink: 30, eat: 30, warm: 24, storms: false, bonk: 0, crate: 22, wander: 0.12, rest: 0.18, tools: 0.25 },
-  { name: 'Hard', speed: 0.95, gather: 1.4, think: 0.6, drink: 38, eat: 38, warm: 27, storms: true, bonk: 1 / 45, crate: 45, wander: 0.04, rest: 0.06, tools: 0.6 },
+  { name: 'Normal', speed: 0.9, gather: 1.4, think: 0.9, drink: 26, eat: 28, warm: 20, storms: false, bonk: 0, crate: 30, wander: 0.14, rest: 0, tools: 0.3 },
+  { name: 'Hard', speed: 0.98, gather: 1.12, think: 0.55, drink: 38, eat: 40, warm: 27, storms: true, bonk: 1 / 40, crate: 50, wander: 0.04, rest: 0, tools: 0.7 },
 ];
 export const DIFF_NAMES = DIFF.map(d => d.name);
 const clean = (s, n) => String(s ?? '').replace(/[<>&"]/g, '').trim().slice(0, n);
