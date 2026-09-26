@@ -217,3 +217,4 @@ button.blue { background: #2a6ad8; }
 #t-jump { right: 150px; bottom: 110px; } #t-eat { right: 150px; bottom: 190px; } #t-sip { right: 90px; bottom: 260px; } #t-bonk { right: 30px; bottom: 60px; width: 56px; height: 56px; }
 body.mobile #bars { bottom: 260px; } body.mobile #tools { bottom: 390px; } body.mobile #pack { bottom: auto; top: 64px; }
 @media (max-width: 720px) { #minimap { display: none; } #lead { top: 64px; } #bars { width: 200px; } #pack { gap: 7px; font-size: 13px; } }
+.vols { display: grid; gap: 6px; margin: 8px auto; max-width: 340px; } .vols label { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-weight: 800; font-size: 14px; } .vols input { width: 170px; }

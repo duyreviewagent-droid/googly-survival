@@ -6,7 +6,7 @@ import { Pet, PETS } from './pets.js';
 import { MAPS, CAMP, BIOME_LIST } from './maps.js';
 import * as S from './sim.js';
 import { Room, newPlayer, TIERS, TIER_NAMES, SHOP, BASE_PRICE, RESOURCES, DAY_LEN, NIGHT_FRAC, DIFF_NAMES } from './core.js';
-import { sfx, music, wind, unlockAudio, setMusic, setSfx, audioState, setListener } from './sfx.js';
+import { sfx, music, ambience, unlockAudio, setMusic, setSfx, setVolume, audioState, setListener } from './sfx.js';
 
 const Q = new URLSearchParams(location.search);
 if (Q.has('shim')) window.requestAnimationFrame = cb => setTimeout(() => cb(performance.now()), 16);
@@ -48,6 +48,8 @@ function toast(t, ms = 2400) { const e = $('toast'); e.textContent = t; e.style.
 document.querySelectorAll('.back').forEach(b => b.onclick = () => { sfx.click(); show(screen === 'scr-help' && prevScreen !== 'scr-help' ? prevScreen : 'scr-title'); if (screen === 'scr-pause' && !G) show('scr-title'); });
 document.addEventListener('pointerdown', () => unlockAudio(), { capture: true });
 document.addEventListener('keydown', () => unlockAudio(), { capture: true });
+let hoverT = 0;
+document.addEventListener('mouseover', e => { const b = e.target.closest?.('button, .mapc, .item, .sw'); if (b && !b.disabled && performance.now() - hoverT > 60) { hoverT = performance.now(); sfx.hover(); } });
 
 // ------------------------------------------------------------------ title: name, colour, stars
 $('nm').value = prof.name;
@@ -270,7 +272,7 @@ $('lb-form').onsubmit = e => { e.preventDefault(); const t = $('lb-msg').value.t
 function addChat(m) {
   const line = m.sys ? `<div class="sys">${esc(m.text)}</div>` : `<div><b style="color:${esc(m.color)}">${esc(m.from)}:</b> ${esc(m.text)}</div>`;
   for (const id of ['lb-log', 'log']) { const el = $(id); el.insertAdjacentHTML('beforeend', line); while (el.children.length > 40) el.firstChild.remove(); el.scrollTop = 1e6; }
-  if (!m.sys) sfx.chat();
+  if (!m.sys) { sfx.chat(); const e = G && [...G.ents.values()].find(q => q.name === m.from); if (e) sfx.babble(e.id === myId ? null : [e.x, e.y + 1.4, e.z], e.id, Math.min(7, 2 + Math.ceil(m.text.length / 12))); }
 }
 
 // ------------------------------------------------------------------ messages from the game (the page's own Room, or the server)
@@ -327,7 +329,7 @@ function leaveWorld() {
   G = null;
   $('hud').classList.add('hidden'); $('clickto').classList.add('hidden'); $('board').classList.add('hidden'); $('lobbyui').classList.add('hidden'); $('faint').classList.add('hidden');
   closeTrade(); unlock();
-  music.play('menu'); wind.set(0);
+  music.play('menu');
   showPreview();
 }
 function leaveAll() {
@@ -349,13 +351,23 @@ function addEnt(p) {
   const e = { id: p.id, name: p.name, color: p.color, bot: p.bot, fig, buf: [], x: p.x, y: p.y, z: p.z, yaw: p.yaw, flags: 2, vx: 0, vz: 0, pet: null, petKind: null, plot: p.plot, tier: p.tier || 0, tools: p.tools || [], money: 0, faints: 0, hp: 100 };
   setPet(e, isMe ? prof.pet : p.pet);
   fig.setGear(e.tools);
-  if (isMe) fig.onStep = v => sfx.step(null, v * 0.5, G?.map?.ground === 'snow' || G?.map?.ground === 'sand');
-  else fig.onStep = v => { if (Math.hypot(e.x - me.x, e.z - me.z) < 22) sfx.step([e.x, e.y, e.z], v * 0.8, G?.map?.ground === 'snow' || G?.map?.ground === 'sand'); };
+  if (isMe) fig.onStep = v => sfx.step(null, v * 0.5, surfaceAt(me.x, me.y, me.z));
+  else fig.onStep = v => { if (Math.hypot(e.x - me.x, e.z - me.z) < 22) sfx.step([e.x, e.y, e.z], v * 0.8, surfaceAt(e.x, e.y, e.z)); };
   G.ents.set(p.id, e);
   if (p.plot >= 0 && G.mapId !== CAMP) world.setPlot(p.plot, { color: p.color, name: p.id === myId ? 'Your' : p.name, tier: p.tier || 0 });
   return e;
 }
 const ent = id => G?.ents.get(id);
+/** what your feet are on, for the footstep sound */
+function surfaceAt(x, y, z) {
+  const m = G?.map; if (!m) return 'grass';
+  const l = m.wetAt(x, z); if (l && y < l.level + 0.25) return m.water?.ice ? 'rock' : 'water';
+  const g = S.groundCol(m, x, z, S.PR, y + 0.1);
+  if (g.c && g.g > m.h(x, z) + 0.1) return g.c.kind === 'log' || g.c.kind === 'counter' || g.c.kind === 'tramp' || g.c.kind === 'tent' ? 'wood' : 'rock';
+  if (m.ground === 'snow') return 'snow'; if (m.ground === 'sand') return 'sand';
+  if (m.ground === 'alpine') { if (y > 9.5) return 'snow'; if (m.slope(x, z) > 0.6) return 'rock'; }
+  return 'grass';
+}
 const nameSpan = id => { const e = ent(id); return e ? `<span style="color:${esc(e.color)}">${esc(e.name)}</span>` : '???'; };
 function center(text, ms = 1500, color = '#fff', small = '') { const c = $('center'); c.innerHTML = esc(text) + (small ? `<small>${esc(small)}</small>` : ''); c.style.color = color; c.style.opacity = 1; clearTimeout(center.t); center.t = setTimeout(() => c.style.opacity = 0, ms); }
 function feed(html) { const d = document.createElement('div'); d.innerHTML = html; $('feed').prepend(d); while ($('feed').children.length > 6) $('feed').lastChild.remove(); }
@@ -393,7 +405,7 @@ function onGameMsg(m) {
     }
     case 'tp': Object.assign(me, { x: m.x, y: m.y, z: m.z, vx: 0, vy: 0, vz: 0 }); break;
     case 'kb': me.vx = m.vx; me.vz = m.vz; me.vy = m.vy; me.onGround = false; me.stun = 0.45; break;
-    case 'ouch': sfx.ouch(); $('vign').style.setProperty('--vc', '#ff1a3a'); G.hurtT = 0.6; break;
+    case 'ouch': sfx.ouch(myId); $('vign').style.setProperty('--vc', '#ff1a3a'); G.hurtT = 0.6; break;
     case 'join': if (!ent(m.p.id)) { addEnt(m.p); feed(`${nameSpan(m.p.id)} joined`); } break;
     case 'gone': { const e = ent(m.id); if (e) { world.actors.remove(e.fig.group); if (e.pet) world.actors.remove(e.pet.group); G.ents.delete(m.id); } break; }
     case 'look': { const e = ent(m.p.id); if (e && m.p.id !== myId) { e.fig.setLook(m.p.color, m.p.skin); e.color = m.p.color; setPet(e, m.p.pet); } break; }
@@ -402,8 +414,8 @@ function onGameMsg(m) {
       const n = G.map.nodes[m.id]; if (!n || !m.by) break;
       const e = ent(m.by); if (e) { e.fig.reach(); e.fig.setTool(n.type === 'tree' ? 'axe' : n.type === 'food' ? null : 'pick'); e.toolT = 1.2; }
       const pos = [n.x, n.y + 1, n.z];
-      if (n.type === 'tree') { sfx.chop(pos); world.chips({ x: n.x, y: n.y + 1.2, z: n.z }, 0xc8a070, 5); if (m.amt === 0) setTimeout(() => sfx.land(1, pos), 500); }
-      else if (n.type === 'rock') { sfx.mine(pos, false); world.chips({ x: n.x, y: n.y + 0.9, z: n.z }, n.v === 'ice' ? 0xcfeaf8 : n.v === 'sandstone' ? 0xd08a52 : 0x8a8884, 5); }
+      if (n.type === 'tree') { sfx.chop(pos); world.chips({ x: n.x, y: n.y + 1.2, z: n.z }, 0xc8a070, 5); if (m.amt === 0) sfx.treeFall(pos); }
+      else if (n.type === 'rock') { if (n.v === 'ice') sfx.iceChip(pos); else sfx.mine(pos, false); world.chips({ x: n.x, y: n.y + 0.9, z: n.z }, n.v === 'ice' ? 0xcfeaf8 : n.v === 'sandstone' ? 0xd08a52 : 0x8a8884, 5); }
       else if (n.type === 'gold') { sfx.mine(pos, true); world.chips({ x: n.x, y: n.y + 0.8, z: n.z }, 0xffc83a, 4); }
       else { sfx.pluck(pos, n.v === 'fish'); if (n.v === 'fish') world.puff({ x: n.x, y: n.y + 0.2, z: n.z }, 0xcfe8ff, 8, 2); }
       if (m.by === myId) { sfx.get(m.res); pop(`+1 ${resEmoji(m.res)} ${labelOf(m.res)}`); G.gatherPop = true; }
@@ -417,13 +429,14 @@ function onGameMsg(m) {
       const e = ent(m.id); if (e) e.tier = m.tier;
       if (e && e.plot >= 0) world.setPlot(e.plot, { tier: m.tier });
       const pl = G.map.plots[e?.plot]; if (pl) sfx.build([pl.x, pl.y + 1, pl.z]);
+      if (e) sfx.yay(m.id === myId ? null : [e.x, e.y + 1, e.z], m.id);
       if (m.id === myId) center(`YOU BUILT A ${TIER_NAMES[G.mapId][m.tier].toUpperCase()}!`, 2600, '#ffe07a', m.tier < 5 ? 'Warmer, safer, and worth more at the end' : 'The best shelter there is!');
       break;
     }
     case 'tools': { const e = ent(m.id); if (e) { e.tools = m.tools; e.fig.setGear(m.tools); } break; }
     case 'crate': world.addCrate(m.c); sfx.crate(); if (G.mapId !== CAMP) feed('📦 Supply crate dropped! Follow the yellow beam'); break;
     case 'crategone': world.removeCrate(m.id); if (m.by === myId) { sfx.open(); center(`SUPPLY CRATE! +$${m.coins}`, 2000, '#7dff9a'); } break;
-    case 'zap': world.zapWarn(m); if (m.k === 'rock') sfx.whistle([m.x, m.y + 5, m.z]); break;
+    case 'zap': world.zapWarn(m); if (m.k === 'rock') sfx.whistle([m.x, m.y + 5, m.z]); else sfx.zapWarn([m.x, m.y, m.z]); break;
     case 'boom': world.boom(m); if (m.k === 'bolt') sfx.thunder(Math.hypot(m.x - me.x, m.z - me.z)); else sfx.rockfall([m.x, m.y, m.z]); break;
     case 'storm':
       if (m.k === 'warn') { G.storm = { k: 'warn', name: m.name, until: G.clock + m.in }; sfx.warn(); center(`${stormEmoji()} ${m.name} COMING!`, 3000, '#ff9a7a', 'Get to your shelter or the campfire at the trading post'); }
@@ -434,7 +447,7 @@ function onGameMsg(m) {
     case 'fx': {
       const e = ent(m.id); if (!e) break;
       const pos = [e.x, e.y + 1, e.z];
-      if (m.k === 'faint') { e.fig.caught(); if (m.id === myId) { sfx.faint(); $('faint-why').textContent = `You ${m.why}.`; } else feed(`😵 ${nameSpan(m.id)} fainted!`); }
+      if (m.k === 'faint') { e.fig.caught(); if (m.id === myId) { sfx.faint(); $('faint-why').textContent = `You ${m.why}.`; } else { feed(`😵 ${nameSpan(m.id)} fainted!`); sfx.aww(pos, m.id); } }
       if (m.k === 'wake' && m.id === myId) sfx.wake();
       if (m.k === 'drink') { if (m.id === myId) sfx.drink(); else sfx.splash(pos); e.fig.reach(); }
       if (m.k === 'eat' && m.id === myId) sfx.eat();
@@ -518,6 +531,7 @@ function pause() { if (!G) return; keys.clear(); show('scr-pause'); $('clickto')
 $('p-resume').onclick = () => { sfx.click(); show(null); if (isMac) askLock(); else canvas.requestPointerLock?.(); };
 $('p-leave').onclick = () => { sfx.click(); leaveAll(); };
 $('sens').value = prof.sens; $('sens').oninput = () => { prof.sens = +$('sens').value; store.set('sens', prof.sens); };
+for (const k of ['music', 'sfx', 'amb']) { const el = $('vol-' + k); el.value = audioState().vol[k]; el.oninput = () => { setVolume(k, +el.value); if (k === 'sfx') sfx.click(); }; }
 $('invy').checked = prof.invy; $('invy').onchange = () => { prof.invy = $('invy').checked; store.set('invy', prof.invy); };
 function openChat() { chatting = true; keys.clear(); mouseHeld = false; $('chatform').classList.remove('hidden'); $('chatin').focus(); }
 function closeChat() { chatting = false; $('chatform').classList.add('hidden'); $('chatin').blur(); $('chatin').value = ''; }
@@ -611,7 +625,7 @@ function doBonk() {
 // ------------------------------------------------------------------ the trading post
 let tradeOpen = false;
 function openTrade() { tradeOpen = true; $('trade').classList.remove('hidden'); unlock(); keys.clear(); mouseHeld = false; drawTrade(); sfx.shopOpen(); }
-function closeTrade() { if (!tradeOpen) return; tradeOpen = false; $('trade').classList.add('hidden'); if (G && G.mapId !== CAMP && !mobile && !Q.has('bot')) { if (isMac) askLock(); else canvas.requestPointerLock?.(); } }
+function closeTrade() { if (!tradeOpen) return; tradeOpen = false; sfx.panel(false); $('trade').classList.add('hidden'); if (G && G.mapId !== CAMP && !mobile && !Q.has('bot')) { if (isMac) askLock(); else canvas.requestPointerLock?.(); } }
 $('tr-close').onclick = () => { sfx.click(); closeTrade(); };
 function drawTrade() {
   if (!G) return;
@@ -654,7 +668,7 @@ function updateLocal(dt) {
   if (ME.faint > 0 || tradeOpen && false) dx = dz = 0;
   const n = Math.ceil(dt / (1 / 90));
   for (let i = 0; i < n; i++) S.stepPlayer(me, { dx, dz, jump: inp.jump && i === 0 && ME.faint <= 0, sprint: inp.sprint }, dt / n, G.map);
-  if (me.jumped) { me.jumped = false; sfx.jump(null); }
+  if (me.jumped) { me.jumped = false; sfx.jump(null, myId); }
   if (me.bounced) { me.bounced = false; sfx.boing(null); }
   if (me.landed) { sfx.land(Math.min(1, me.landed / 14)); me.landed = 0; }
   const moving = Math.hypot(dx, dz) > 0.1;
@@ -794,7 +808,6 @@ function updateHUD(dt) {
   world.setTime(t, nk);
   const stormOn = G.storm?.k === 'on';
   music.play(stormOn ? 'storm' : nk > 0.7 ? 'night' : BIOME_LIST[G.mapId].key);
-  wind.set(stormOn ? 1 : G.storm?.k === 'warn' ? 0.35 : G.mapId === 0 || G.mapId === 3 ? 0.18 : 0.05);
   // storm banner
   if (G.storm) {
     const s = Math.max(0, Math.ceil(G.storm.until - t));
@@ -822,6 +835,16 @@ function updateHUD(dt) {
   if (G.hurtT > 0) { vc = '#ff1a3a'; va = Math.max(va, G.hurtT); }
   if (vc) $('vign').style.setProperty('--vc', vc);
   $('vign').style.opacity = Math.min(0.85, va) * (0.75 + Math.sin(performance.now() / 300) * 0.15);
+  // your body complains: tummy rumbles, teeth chatter, panting, a dry cough
+  if (ME.faint <= 0) {
+    G.bodyT = (G.bodyT ?? 4) - dt;
+    if (G.bodyT <= 0) {
+      G.bodyT = 6 + Math.random() * 5;
+      if (ME.temp < 26) sfx.chatter(); else if (ME.temp > 74) sfx.pant(); else if (ME.food < 22) sfx.growl(); else if (ME.water < 18) sfx.cough(); else G.bodyT = 2;
+    }
+    if (G.coldBefore && ME.temp >= 40 && (ME.shelter > 0 || nearFireLocal())) { sfx.ahh(); G.coldBefore = false; }
+    if (ME.temp < 30) G.coldBefore = true;
+  }
   if (ME.hp < 30 && ME.faint <= 0) { G.alarmT = (G.alarmT || 0) - dt; if (G.alarmT <= 0) { G.alarmT = 1.2; sfx.heartbeat(0.7); } }
   // what can I do here?
   let pr = '';
@@ -940,6 +963,23 @@ function applyTestHooks() {
   if (Q.has('fakeend')) setTimeout(() => R.endGame(), 600);
 }
 
+// ------------------------------------------------------------------ what you can hear around you
+function fires() {
+  const m = G.map, out = [];
+  if (m.post) out.push([m.post.fire.x, m.post.fire.z]);
+  if (G.mapId === CAMP) out.push([0, 0]);
+  for (const e of G.ents.values()) if (e.tier > 0 && e.plot >= 0) { const pl = m.plots[e.plot]; out.push([pl.x, pl.z]); }
+  return out;
+}
+function nearFireLocal() { return fires().some(([x, z]) => Math.hypot(x - me.x, z - me.z) < 7.5); }
+function feedAmbience(dt) {
+  const m = G.map;
+  const fire = Math.min(99, ...fires().map(([x, z]) => Math.hypot(x - camPos.x, z - camPos.z)));
+  const water = Math.min(99, ...m.lakes.map(l => Math.max(0, Math.hypot(camPos.x - l.x, camPos.z - l.z) - l.r)));
+  const biome = G.mapId === CAMP ? 'camp' : BIOME_LIST[G.mapId].key;
+  ambience.update(dt, { biome, night: G.mapId === CAMP ? 0 : nightK(G.clock), storm: G.storm?.k === 'on' ? 1 : G.storm?.k === 'warn' ? 0.3 : 0, fire, water, inside: ME.tier >= 2 && ME.shelter > 0 && G.mapId !== CAMP });
+}
+
 // ------------------------------------------------------------------ main loop
 function frame() {
   const dt = Math.min(0.05, clock.getDelta()), t = clock.elapsedTime;
@@ -949,13 +989,14 @@ function frame() {
     updateEnts(dt);
     updateCamera(dt);
     updateHUD(dt);
+    feedAmbience(dt);
     world.update(dt, t, V.set(me.x, me.y, me.z));
-  } else { menuUpdate(dt); world.update(dt, t, V.set(0, 0, 0)); }
+  } else { menuUpdate(dt); world.update(dt, t, V.set(0, 0, 0)); ambience.update(dt, { biome: 'camp', night: 0, storm: 0, fire: 5, water: 99, inside: false }); }
   world.renderer.render(world.scene, world.camera);
   if (Q.has('dbg')) { const d = $('dbg') || document.body.appendChild(Object.assign(document.createElement('pre'), { id: 'dbg', style: 'position:fixed;left:0;bottom:160px;z-index:99;color:#0f0;background:#000a;font-size:12px' })); d.textContent = JSON.stringify({ myId, map: G?.mapId, state: G?.state, clock: G?.clock?.toFixed(1), me: [me.x, me.y, me.z].map(v => +v.toFixed(2)), ME }); }
   requestAnimationFrame(frame);
 }
-if (!Q.has('icon')) {
+if (!Q.has('icon') && !Q.has('audiotest')) {
   showPreview(); frame();
   if (pendingRoom) setTimeout(() => { if (prof.name) openOnline(); }, 200);
   if (Q.has('lobby')) { if (!prof.name) { prof.name = 'TESTER'; } openOnline(); }
@@ -966,3 +1007,10 @@ if (!Q.has('icon')) {
 }
 window.__gs = { get G() { return G; }, me, ME, world, send, get room() { return room; }, get local() { return local; }, prof };
 if (Q.has('icon')) import('./icon.js').then(m => m.renderIcon());
+if (Q.has('audiotest')) import('./sfx.js').then(async m => {
+  document.body.innerHTML = '<pre id="at" style="position:fixed;inset:0;margin:0;padding:10px;background:#000;color:#0f0;font:12px monospace;column-count:3;z-index:999"></pre>';
+  const pre = document.getElementById('at'), t0 = performance.now();
+  const res = await m.audioTest((k, r) => { pre.textContent += `${r.err ? 'ERR ' + r.err : (r.rms < 0.001 ? 'SILENT ' : 'ok ') + 'rms ' + r.rms + ' peak ' + r.peak} ${k}\n`; });
+  pre.textContent = `DONE ${Object.keys(res).length} sounds in ${((performance.now() - t0) / 1000).toFixed(1)}s\n` + pre.textContent;
+  window.__audio = res; document.title = 'AUDIO DONE';
+});

@@ -8,6 +8,7 @@ Four googlies, four wild maps: survive the **Frozen Tundra**, the **Scorched Dun
 - **Shelter**: 5 levels on your plot, different in every biome (snow wall → igloo → ice palace, adobe → desert palace, lean-to → wooden fort, rock shelter → stone castle). Inside you're warm, heal fast and are safe from storms.
 - **Winner**: money + shelter value − 40 per faint. Awards for Richest, Best Shelter and Toughest. Stars from each game buy skins and pets.
 - **Solo**: ▶ PLAY SOLO runs the whole game in the page against 3 computer googlies (Easy / Normal / Hard). No server needed. Auto-saves every 30 s; CONTINUE picks it up.
+- **Sound**: everything is synthesised live: a full song per map (A-A-B-A, real-ish instruments: plucked guitar/oud, flute, horn, strings, piano, kalimba, bells, taiko), night/storm/camp/victory tunes that crossfade, per-biome ambience (birds, crickets, owls, wind, rain, sand, ice creaks, wolves, campfire crackle, lapping water; muffled inside your shelter), surface-aware footsteps, googly voices and body sounds. Music / effects / nature volume sliders in the pause menu.
 - **Online** (optional): public/private lobbies with 4-letter codes and invite links, walk around Base Camp while you wait, chat, up to 4 players, and CPUs fill empty spots (and take over anyone who leaves).
 
 ## Layout
@@ -28,4 +29,5 @@ Four googlies, four wild maps: survive the **Frozen Tundra**, the **Scorched Dun
     node web/test/sim.mjs MAP DIFF DAYS        # a whole game of 4 CPUs, as fast as possible
     URL=ws://localhost:8000 node web/test/lobby.mjs   # two online players: lobby, chat, start, gather, leave
     PORT=8000 web/test/shot.sh out.png "solo=2&clock=100"   # headless screenshot (also shelters=2, storm=1, trade=1, rich=1, fakeend=1, lobby=1, icon=1, cam=x,y,z,tx,ty,tz)
+    node web/test/cdp.mjs "audiotest=1" "..."            # real-time Chrome driver; ?audiotest=1 renders every sound offline and measures it
     "Googly Survival.app/Contents/MacOS/GooglySurvival" --windowed --query "solo=0" --shot out.png --delay 8
