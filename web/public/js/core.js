@@ -40,9 +40,10 @@ const NODE_R = { tree: 0.4, rock: 1.1, gold: 0.9, food: 0.6 };
 const BOTS = [['PINKY', '#ff6fb5'], ['BLUEBERRY', '#2f7bff'], ['LIMEY', '#7bd13b'], ['SUNNY', '#ffc53a'], ['OLLIE', '#ff9500'], ['MINTY', '#00c7be']];
 const BOT_LOOK = [['polka', 'pup'], ['none', 'duck'], ['camo', 'none'], ['none', 'bunny'], ['tiger', 'none'], ['none', 'kitty']];
 const DIFF = [
-  { name: 'Easy', speed: 0.9, gather: 1.4, think: 0.9, drink: 26, eat: 28, warm: 20, storms: false, bonk: 0, crate: 30, wander: 0.14, tools: 0.3 },
-  { name: 'Normal', speed: 0.98, gather: 1.12, think: 0.55, drink: 38, eat: 40, warm: 27, storms: true, bonk: 1 / 40, crate: 50, wander: 0.04, tools: 0.7 },
-  { name: 'Hard', speed: 1.04, gather: 0.95, think: 0.35, drink: 45, eat: 45, warm: 29, storms: true, bonk: 1 / 14, crate: 80, wander: 0, tools: 1 },
+  // rest: chance each decision to sit down for a break; gather: how much slower than you they chop and mine
+  { name: 'Easy', speed: 0.78, gather: 3.2, think: 1.4, drink: 22, eat: 22, warm: 18, storms: false, bonk: 0, crate: 10, wander: 0.22, rest: 0.3, tools: 0.08 },
+  { name: 'Normal', speed: 0.86, gather: 2.2, think: 1.0, drink: 30, eat: 30, warm: 24, storms: false, bonk: 0, crate: 22, wander: 0.12, rest: 0.18, tools: 0.25 },
+  { name: 'Hard', speed: 0.95, gather: 1.4, think: 0.6, drink: 38, eat: 38, warm: 27, storms: true, bonk: 1 / 45, crate: 45, wander: 0.04, rest: 0.06, tools: 0.6 },
 ];
 export const DIFF_NAMES = DIFF.map(d => d.name);
 const clean = (s, n) => String(s ?? '').replace(/[<>&"]/g, '').trim().slice(0, n);
@@ -683,6 +684,9 @@ function decide(R, p, B, D) {
     const goodHome = p.tier >= (map.storm.zap ? 2 : 1);
     return set({ k: 'warm', to: goodHome ? home : [map.post.fire.x + 2, map.post.fire.z + 1.5] });
   }
+  // a computer googly needs a sit-down now and then
+  if (cur?.k === 'rest') return;
+  if (Math.random() < D.rest * D.think) return set({ k: 'rest', until: R.clock + 4 + Math.random() * 7 });
   // 4. a supply crate nearby
   let crate = null, cd = D.crate;
   for (const c of R.crates.values()) { const d = Math.hypot(c.x - p.x, c.z - p.z); if (d < cd) { cd = d; crate = c; } }
@@ -732,6 +736,7 @@ function doTask(R, p, B, D, dt) {
     case 'crate': if (!R.crates.has(T.id)) { B.task = null; break; } if (walkTo(R, p, dt, T.to, true) || Math.hypot(T.to[0] - p.x, T.to[1] - p.z) < 2) R.act(p, { t: 'open', id: T.id }); break;
     case 'build': if (walkTo(R, p, dt, T.to)) { R.act(p, { t: 'build' }); B.task = null; } break;
     case 'wander': if (walkTo(R, p, dt, T.to) || R.clock > T.until) B.task = null; break;
+    case 'rest': standStill(R, p, dt); p.yaw += dt * 0.4 * Math.sin(R.clock * 0.7 + p.id); if (R.clock > T.until || p.water < D.drink || p.food < D.eat || p.temp < D.warm || p.temp > 100 - D.warm) B.task = null; break;
     case 'post': {
       const q = R.map.post;
       if (walkTo(R, p, dt, [q.x + (p.id % 3 - 1) * 2, q.z])) {

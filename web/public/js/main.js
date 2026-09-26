@@ -22,7 +22,7 @@ const prof = {
   name: store.get('name', ''), color: store.get('color', '#ffcc00'), skin: store.get('skin', 'none'), pet: store.get('pet', 'none'),
   stars: store.get('stars', 60), owned: store.get('owned', ['none']), ownedPets: store.get('ownedPets', ['none']),
   sens: store.get('sens', 1), invy: store.get('invy', false), zoom: store.get('zoom', 4.6),
-  solo: store.get('soloSet', { map: -1, diff: 1, days: 4, storms: true, bonk: true }),
+  solo: store.get('soloSet', { map: -1, diff: 0, days: 4, storms: true, bonk: true }),
 };
 if (Q.has('stars')) prof.stars = +Q.get('stars');
 const isMac = !!window.webkit?.messageHandlers?.gp;
