@@ -17,16 +17,19 @@
 <!-- title -->
 <section id="scr-title" class="screen">
   <div class="card">
+    <div class="tcol">
     <h1><span class="g">GOOGLY</span> <span class="s">SURVIVAL</span></h1>
     <p class="sub">4 googlies · 4 wild maps · who ends up with the most money and the best shelter?</p>
     <div id="invite" class="banner hidden"></div>
     <input id="nm" maxlength="14" placeholder="Your name" autocomplete="off">
     <div id="swatches"></div>
+    </div><div class="tcol">
     <div class="coinrow"><span class="coins"><i class="star"></i><b id="t-stars">0</b> stars</span><button id="b-shop" class="gold">🛍 SHOP · skins &amp; pets</button></div>
     <button id="b-solo" class="big green wide">▶ PLAY SOLO<small>you + 3 computer googlies · starts right away</small></button>
     <button id="b-continue" class="big brown wide hidden">↻ CONTINUE SOLO GAME<small id="continue-sub"></small></button>
     <button id="b-online" class="big blue wide">PLAY ONLINE<small>optional · lobbies · codes · invite up to 3 friends</small></button>
     <div class="row"><button id="b-fs" class="grey">⛶ Full screen</button><button id="b-music" class="grey">♪ Music</button><button id="b-sfx" class="grey">🔊 Sound</button><button id="b-help" class="grey">? How to play</button></div>
+    </div>
   </div>
 </section>
 
@@ -133,7 +136,9 @@
   <button id="t-eat" class="touch tbtn brown">EAT</button>
   <button id="t-sip" class="touch tbtn blue">SIP</button>
   <button id="t-bonk" class="touch tbtn red">BONK</button>
-  <button id="t-menu" class="touch tbtn grey">☰</button>
+  <button id="t-build" class="touch tbtn gold">BUILD</button>
+  <button id="t-run" class="touch tbtn grey">RUN</button>
+  <div id="tbar" class="touch"><button id="t-board" class="grey" aria-label="Scores">🏆</button><button id="t-chat" class="grey" aria-label="Chat">💬</button><button id="t-menu" class="grey" aria-label="Menu">☰</button></div>
 </div>
 <div id="clickto" class="hidden"><div>CLICK TO PLAY<small>(mouse looks around · Esc for menu)</small></div></div>
 
@@ -155,8 +160,8 @@
   <div class="card">
     <h2>PAUSED</h2>
     <p class="tiny" id="p-note">The game keeps going while you're in this menu!</p>
-    <label class="slider">Mouse speed <input type="range" id="sens" min="0.2" max="3" step="0.05"></label>
-    <label class="chk"><input type="checkbox" id="invy"> Invert mouse Y</label>
+    <label class="slider"><span class="kbonly">Mouse speed</span><span class="touchonly">Look speed</span> <input type="range" id="sens" min="0.2" max="3" step="0.05"></label>
+    <label class="chk"><input type="checkbox" id="invy"> Invert <span class="kbonly">mouse</span><span class="touchonly">look</span> Y</label>
     <div class="vols"><label>♪ Music <input type="range" id="vol-music" min="0" max="1" step="0.05"></label><label>🔊 Effects <input type="range" id="vol-sfx" min="0" max="1" step="0.05"></label><label>🌲 Nature sounds <input type="range" id="vol-amb" min="0" max="1" step="0.05"></label></div>
     <div class="row"><button id="p-music" class="grey">♪ Music</button><button id="p-sfx" class="grey">🔊 Sound</button><button id="p-fs" class="grey">⛶ Full screen</button><button id="p-help" class="grey">? Help</button></div>
     <div class="row"><button id="p-resume" class="big green">RESUME</button><button id="p-leave" class="red">LEAVE GAME</button></div>
@@ -181,11 +186,12 @@
   <div class="card wide help">
     <h2>HOW TO PLAY</h2>
     <p><b>Survive</b> in the <b>Frozen Tundra</b>, the <b>Scorched Dunes</b>, the <b>Whispering Woods</b> or the <b>Rocky Peaks</b> with 3 other googlies (computer googlies or your friends). Keep your <b>❤️ health</b> up: eat 🍗, drink 💧 at the lakes, and don't get too cold or too hot 🌡️. Nights are cold, desert days are roasting, and every day a storm rolls in.</p>
-    <p><b>Gather</b>: walk up to a tree, rock, gold ore, berry bush, cactus or fishing hole and <b>hold E</b> (or hold the mouse button). <b>Q</b> eats, <b>R</b> sips from your canteen, <b>E</b> at a lake drinks and fills the canteen.</p>
-    <p><b>Money</b>: sell things at the <b>Trading Post</b> in the middle of the map (press E at the counter). Prices change every day. Buy an axe, a pickaxe, a warm coat, a sun hat or a bigger backpack. Grab 📦 <b>supply crates</b> before anyone else does.</p>
-    <p><b>Shelter</b>: go to your plot (the flag in your colour) and press <b>B</b> to build. There are 5 levels, from a lean-to to a fort or a palace. Inside your shelter you stay warm, heal fast and you're safe from storms.</p>
-    <p><b>Who wins?</b> When the last day ends, the googly with the most <b>money + shelter value</b> wins (fainting costs you). <b>F</b> bonks a googly so they drop something, but they can bonk you back!</p>
-    <p class="tiny">WASD move · Mouse look · Space jump · Shift sprint · E / hold click: gather, drink, trade, open · Q eat · R sip · B build · F / right-click bonk · Tab scores · T chat · M music · Esc menu</p>
+    <p><b>Gather</b>: walk up to a tree, rock, gold ore, berry bush, cactus or fishing hole and <b>hold <span class="kbonly">E</span><span class="touchonly">USE</span></b><span class="kbonly"> (or hold the mouse button)</span><span class="touchonly"></span>. <b><span class="kbonly">Q</span><span class="touchonly">EAT</span></b> eats, <b><span class="kbonly">R</span><span class="touchonly">SIP</span></b> sips from your canteen, <b><span class="kbonly">E</span><span class="touchonly">USE</span></b> at a lake drinks and fills the canteen.</p>
+    <p><b>Money</b>: sell things at the <b>Trading Post</b> in the middle of the map (press <span class="kbonly">E</span><span class="touchonly">USE</span> at the counter). Prices change every day. Buy an axe, a pickaxe, a warm coat, a sun hat or a bigger backpack. Grab 📦 <b>supply crates</b> before anyone else does.</p>
+    <p><b>Shelter</b>: go to your plot (the flag in your colour) and press <b><span class="kbonly">B</span><span class="touchonly">BUILD</span></b> to build. There are 5 levels, from a lean-to to a fort or a palace. Inside your shelter you stay warm, heal fast and you're safe from storms.</p>
+    <p><b>Who wins?</b> When the last day ends, the googly with the most <b>money + shelter value</b> wins (fainting costs you). <b><span class="kbonly">F</span><span class="touchonly">BONK</span></b> bonks a googly so they drop something, but they can bonk you back!</p>
+    <p class="touchonly"><b>On a phone or tablet</b>: the <b>stick</b> on the left walks (push it all the way to run, or tap <b>RUN</b>). Drag anywhere on the right to look around, pinch to zoom. Hold <b>USE</b> to gather, drink, trade and open crates. <b>BUILD</b> at your plot, <b>EAT</b>, <b>SIP</b>, <b>BONK</b>, <b>JUMP</b>. Top right: 🏆 scores, 💬 chat, ☰ menu.</p>
+    <p class="tiny kbonly">WASD move · Mouse look · Space jump · Shift sprint · E / hold click: gather, drink, trade, open · Q eat · R sip · B build · F / right-click bonk · Tab scores · T chat · M music · Esc menu</p>
     <div class="row"><button class="back big green">GOT IT</button></div>
   </div>
 </section>

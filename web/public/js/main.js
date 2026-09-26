@@ -28,6 +28,9 @@ if (Q.has('stars')) prof.stars = +Q.get('stars');
 const isMac = !!window.webkit?.messageHandlers?.gp;
 const mobile = matchMedia('(pointer: coarse)').matches && 'ontouchstart' in window;
 if (mobile) document.body.classList.add('mobile');
+// the key a prompt shows: a keyboard letter on computers, the touch button's name on phones
+const TOUCH_KEY = { E: 'USE', B: 'BUILD', Q: 'EAT', R: 'SIP', F: 'BONK' };
+const kk = k => mobile ? TOUCH_KEY[k] || k : k;
 const RES_EMOJI = { wood: '🪵', stone: '🪨', food: '🍗', gold: '🥇' };
 const labelOf = (k, mapId = G?.mapId) => (MAPS[mapId ?? 2]?.labels || MAPS[2].labels)[k];
 const resEmoji = (k, mapId = G?.mapId) => k === 'stone' && mapId === 0 ? '🧊' : k === 'food' ? ({ 0: '🐟', 1: '🌵', 2: '🫐', 3: '🫐' }[mapId] || '🍗') : RES_EMOJI[k];
@@ -43,11 +46,21 @@ const ME = { hp: 100, food: 100, water: 100, temp: 50, env: 50, inv: { wood: 0, 
 // ------------------------------------------------------------------ screens
 const SCREENS = ['scr-title', 'scr-solo', 'scr-online', 'scr-shop', 'scr-pause', 'scr-end', 'scr-help'];
 let screen = 'scr-title', prevScreen = 'scr-title';
-function show(id) { if (id !== screen) prevScreen = screen; screen = id; for (const s of SCREENS) $(s).classList.toggle('hidden', s !== id); }
+function show(id) { if (id !== screen) prevScreen = screen; screen = id; if (id && mobile) $('toast').style.opacity = 0; for (const s of SCREENS) $(s).classList.toggle('hidden', s !== id); }
 function toast(t, ms = 2400) { const e = $('toast'); e.textContent = t; e.style.opacity = 1; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.opacity = 0, ms); }
 document.querySelectorAll('.back').forEach(b => b.onclick = () => { sfx.click(); show(screen === 'scr-help' && prevScreen !== 'scr-help' ? prevScreen : 'scr-title'); if (screen === 'scr-pause' && !G) show('scr-title'); });
 document.addEventListener('pointerdown', () => unlockAudio(), { capture: true });
 document.addEventListener('keydown', () => unlockAudio(), { capture: true });
+// iOS only lets audio start from a touchend / click, not a touchstart
+document.addEventListener('touchend', () => unlockAudio(), { capture: true });
+document.addEventListener('click', () => unlockAudio(), { capture: true });
+if (mobile) {
+  // no pinch-zoom, double-tap zoom or rubber-banding: only the panels that really scroll may move
+  for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
+  document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
+  document.addEventListener('touchmove', e => { if (e.touches.length > 1 || !e.target.closest?.('.card, .lp, #rooms, #shop-grid, #lb-log, input[type=range]')) e.preventDefault(); }, { passive: false });
+  addEventListener('scroll', () => { if (scrollY) scrollTo(0, 0); });
+}
 let hoverT = 0;
 document.addEventListener('mouseover', e => { const b = e.target.closest?.('button, .mapc, .item, .sw'); if (b && !b.disabled && performance.now() - hoverT > 60) { hoverT = performance.now(); sfx.hover(); } });
 
@@ -70,6 +83,7 @@ $('b-help').onclick = $('p-help').onclick = () => { sfx.click(); show('scr-help'
 $('b-shop').onclick = () => { sfx.shopOpen(); openShop(); };
 const fsToggle = () => { if (document.fullscreenElement) document.exitFullscreen?.(); else document.documentElement.requestFullscreen?.().catch(() => toast('Full screen not available here')); };
 $('b-fs').onclick = $('p-fs').onclick = () => { sfx.click(); fsToggle(); };
+if (!document.documentElement.requestFullscreen) for (const id of ['b-fs', 'p-fs']) $(id).classList.add('hidden');   // iPhone Safari can't
 function drawAudioBtns() { const a = audioState(); for (const id of ['b-music', 'p-music']) $(id).textContent = a.music ? '♪ Music: on' : '♪ Music: off'; for (const id of ['b-sfx', 'p-sfx']) $(id).textContent = a.sfx ? '🔊 Sound: on' : '🔈 Sound: off'; }
 $('b-music').onclick = $('p-music').onclick = () => { setMusic(!audioState().music); drawAudioBtns(); };
 $('b-sfx').onclick = $('p-sfx').onclick = () => { setSfx(!audioState().sfx); drawAudioBtns(); sfx.click(); };
@@ -318,7 +332,7 @@ function enterWorld(m) {
     music.play(b.key);
     if (m.clock < 3) { center(`${b.emoji} ${b.name.toUpperCase()}`, 3600, '#ffe07a', `Survive ${m.days} days · most money + best shelter wins`); sfx.dawn(); }
     buildMinimap();
-    setTimeout(() => { if (G && G.mapId === m.map && G.clock < 40) hintOnce('Hold E (or hold the mouse) on a tree, rock or bush to gather. Your plot is the flag in your colour!'); }, 3800);
+    setTimeout(() => { if (G && G.mapId === m.map && G.clock < 40) hintOnce(mobile ? 'Hold USE next to a tree, rock or bush to gather. Your plot is the flag in your colour!' : 'Hold E (or hold the mouse) on a tree, rock or bush to gather. Your plot is the flag in your colour!'); }, 3800);
     if (!mobile && !Q.has('bot') && !Q.has('cam')) askLock();
     applyTestHooks();
   }
@@ -528,7 +542,7 @@ document.addEventListener('pointerlockchange', () => {
 });
 function unlock() { if (document.pointerLockElement) document.exitPointerLock(); if (macLocked) { macLocked = false; window.webkit?.messageHandlers?.gp?.postMessage('unlock'); } }
 function pause() { if (!G) return; keys.clear(); show('scr-pause'); $('clickto').classList.add('hidden'); }
-$('p-resume').onclick = () => { sfx.click(); show(null); if (isMac) askLock(); else canvas.requestPointerLock?.(); };
+$('p-resume').onclick = () => { sfx.click(); show(null); if (isMac) askLock(); else if (!mobile) canvas.requestPointerLock?.(); };
 $('p-leave').onclick = () => { sfx.click(); leaveAll(); };
 $('sens').value = prof.sens; $('sens').oninput = () => { prof.sens = +$('sens').value; store.set('sens', prof.sens); };
 for (const k of ['music', 'sfx', 'amb']) { const el = $('vol-' + k); el.value = audioState().vol[k]; el.oninput = () => { setVolume(k, +el.value); if (k === 'sfx') sfx.click(); }; }
@@ -538,24 +552,64 @@ function closeChat() { chatting = false; $('chatform').classList.add('hidden'); 
 $('chatform').onsubmit = e => { e.preventDefault(); const t = $('chatin').value.trim(); if (t) send({ t: 'chat', text: t }); closeChat(); };
 const onShopMat = () => G && G.mapId === CAMP && Math.hypot(me.x - G.map.shop.x, me.z - G.map.shop.z) < G.map.shop.r;
 
-// touch controls
-const touch = { mx: 0, mz: 0, jump: false, stickId: null, lookId: null, lx: 0, ly: 0, act: false };
+// touch controls: stick on the left, drag anywhere else to look, pinch to zoom, buttons on the right
+const touch = { mx: 0, mz: 0, mag: 0, jump: false, run: false, board: false, stickId: null, lookId: null, lx: 0, ly: 0, act: false, pinch: null, pts: new Map() };
 if (mobile) {
   const stick = $('stick'), knob = $('knob');
-  stick.addEventListener('touchstart', e => { touch.stickId = e.changedTouches[0].identifier; e.preventDefault(); }, { passive: false });
+  const moveStick = t => {
+    const r = stick.getBoundingClientRect(), R = r.width / 2, dx = (t.clientX - r.left - R) / R, dy = (t.clientY - r.top - R) / R, l = Math.min(1, Math.hypot(dx, dy)), a = Math.atan2(dy, dx);
+    const k = l < 0.12 ? 0 : l;   // a little dead zone
+    touch.mx = Math.cos(a) * k; touch.mz = -Math.sin(a) * k; touch.mag = k;
+    knob.style.transform = `translate(${Math.cos(a) * l * R * 0.62}px, ${Math.sin(a) * l * R * 0.62}px)`;
+  };
+  const stopStick = () => { touch.stickId = null; touch.mx = touch.mz = touch.mag = 0; knob.style.transform = ''; };
+  stick.addEventListener('touchstart', e => { e.preventDefault(); const t = e.changedTouches[0]; touch.stickId = t.identifier; moveStick(t); }, { passive: false });
   addEventListener('touchmove', e => {
     for (const t of e.changedTouches) {
-      if (t.identifier === touch.stickId) { const r = stick.getBoundingClientRect(), dx = (t.clientX - r.left - r.width / 2) / (r.width / 2), dy = (t.clientY - r.top - r.height / 2) / (r.height / 2), l = Math.min(1, Math.hypot(dx, dy)), a = Math.atan2(dy, dx); touch.mx = Math.cos(a) * l; touch.mz = -Math.sin(a) * l; knob.style.left = 45 + Math.cos(a) * l * 45 + 'px'; knob.style.top = 45 + Math.sin(a) * l * 45 + 'px'; }
-      if (t.identifier === touch.lookId) { look.dx += (t.clientX - touch.lx) * 2.2; look.dy += (t.clientY - touch.ly) * 2.2; touch.lx = t.clientX; touch.ly = t.clientY; }
+      if (t.identifier === touch.stickId) moveStick(t);
+      if (touch.pts.has(t.identifier)) touch.pts.set(t.identifier, [t.clientX, t.clientY]);
+      if (t.identifier === touch.lookId && !touch.pinch) { look.dx += (t.clientX - touch.lx) * 2.2; look.dy += (t.clientY - touch.ly) * 2.2; touch.lx = t.clientX; touch.ly = t.clientY; }
+    }
+    if (touch.pinch) {
+      const [a, b] = touch.pinch.ids.map(i => touch.pts.get(i));
+      if (a && b) { prof.zoom = Math.max(2.2, Math.min(12, touch.pinch.z * touch.pinch.d / Math.max(20, Math.hypot(a[0] - b[0], a[1] - b[1])))); }
     }
   }, { passive: false });
-  addEventListener('touchend', e => { for (const t of e.changedTouches) { if (t.identifier === touch.stickId) { touch.stickId = null; touch.mx = touch.mz = 0; knob.style.left = knob.style.top = '45px'; } if (t.identifier === touch.lookId) touch.lookId = null; } });
-  canvas.addEventListener('touchstart', e => { const t = e.changedTouches[0]; if (t.clientX > innerWidth * 0.35) { touch.lookId = t.identifier; touch.lx = t.clientX; touch.ly = t.clientY; } }, { passive: true });
-  const tb = (id, down, up) => { $(id).addEventListener('touchstart', e => { e.preventDefault(); down(); }, { passive: false }); if (up) $(id).addEventListener('touchend', up); };
+  const end = e => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === touch.stickId) stopStick();
+      if (t.identifier === touch.lookId) touch.lookId = null;
+      touch.pts.delete(t.identifier);
+      if (touch.pinch?.ids.includes(t.identifier)) { touch.pinch = null; store.set('zoom', prof.zoom); const rest = [...touch.pts.entries()][0]; if (rest) { touch.lookId = rest[0]; [touch.lx, touch.ly] = rest[1]; } }
+    }
+  };
+  addEventListener('touchend', end); addEventListener('touchcancel', end);
+  canvas.addEventListener('touchstart', e => {
+    e.preventDefault();   // no emulated mouse clicks (a look-tap must never gather or build)
+    for (const t of e.changedTouches) {
+      touch.pts.set(t.identifier, [t.clientX, t.clientY]);
+      if (touch.lookId === null) { touch.lookId = t.identifier; touch.lx = t.clientX; touch.ly = t.clientY; }
+      else if (!touch.pinch && touch.pts.size >= 2) { const [a, b] = [...touch.pts.values()]; touch.pinch = { ids: [...touch.pts.keys()].slice(0, 2), d: Math.max(20, Math.hypot(a[0] - b[0], a[1] - b[1])), z: prof.zoom }; }
+    }
+  }, { passive: false });
+  // hold-style buttons react on touchstart (no 300 ms wait) and light up while held
+  const tb = (id, down, up) => {
+    const el = $(id);
+    el.addEventListener('touchstart', e => { e.preventDefault(); el.classList.add('held'); down(); }, { passive: false });
+    const off = () => { el.classList.remove('held'); up?.(); };
+    el.addEventListener('touchend', off); el.addEventListener('touchcancel', off);
+  };
   tb('t-jump', () => touch.jump = true, () => touch.jump = false);
-  tb('t-act', () => { touch.act = true; useOnce(); }, () => touch.act = false);
+  tb('t-act', () => { if (G?.mapId === CAMP) { if (onShopMat() && !shopOpen) { sfx.shopOpen(); openShop(); } return; } touch.act = true; if (tradeOpen) return; useOnce(); }, () => touch.act = false);
   tb('t-eat', () => send({ t: 'eat' })); tb('t-sip', () => send({ t: 'sip' })); tb('t-bonk', () => doBonk());
-  tb('t-menu', () => { if (G?.mapId === CAMP) $('lobbyui').classList.toggle('collapsed'); else pause(); });
+  tb('t-build', () => { if (G && G.mapId !== CAMP && G.state === 'play' && ME.faint <= 0) tryBuild(); });
+  tb('t-run', () => { touch.run = !touch.run; $('t-run').classList.toggle('on', touch.run); });
+  // these open things (and may pop the keyboard), so they use a real click
+  $('t-board').onclick = () => { touch.board = !touch.board; $('t-board').classList.toggle('on', touch.board); };
+  $('t-chat').onclick = () => { if (!G) return; if (G.mapId === CAMP) { $('lobbyui').classList.remove('collapsed'); $('lb-msg').focus(); } else if (chatting) closeChat(); else openChat(); };
+  $('t-menu').onclick = () => { if (G?.mapId === CAMP) $('lobbyui').classList.toggle('collapsed'); else pause(); };
+  $('chatin').addEventListener('blur', () => { if (chatting) setTimeout(() => { if (chatting && document.activeElement !== $('chatin')) closeChat(); }, 50); scrollTo(0, 0); });
+  $('lb-msg').addEventListener('blur', () => scrollTo(0, 0));
 }
 
 // ------------------------------------------------------------------ using things: gather, drink, trade, open, build, bonk
@@ -653,7 +707,7 @@ function localInput() {
   let mx = (k('KeyD') || k('ArrowRight') ? 1 : 0) - (k('KeyA') || k('ArrowLeft') ? 1 : 0) + touch.mx;
   let mz = (k('KeyW') || k('ArrowUp') ? 1 : 0) - (k('KeyS') || k('ArrowDown') ? 1 : 0) + touch.mz;
   if (shopOpen || screen === 'scr-pause' || ME.faint > 0) mx = mz = 0;
-  return { mx, mz, jump: k('Space') || touch.jump, sprint: k('ShiftLeft') || k('ShiftRight') };
+  return { mx, mz, jump: k('Space') || touch.jump, sprint: k('ShiftLeft') || k('ShiftRight') || touch.run || touch.mag > 0.9 };
 }
 const botS = { t: 0, mx: 0, mz: 1 };
 function botInput() { botS.t -= 1 / 60; if (botS.t <= 0) { botS.t = 1 + Math.random() * 2; botS.mx = Math.random() * 2 - 1; me.camYaw += (Math.random() - 0.5) * 2; } return { mx: botS.mx * 0.4, mz: 1, jump: Math.random() < 0.01, sprint: true }; }
@@ -789,10 +843,16 @@ function drawTools() {
   $('tools').innerHTML = ME.tools.map(t => `<span title="${t}">${tl[t] || ''}</span>`).join('');
   const e = ent(myId); if (e) { e.fig.setGear(ME.tools); }
 }
+function setText(el, t) { if (el.textContent !== t) el.textContent = t; }
 function setBar(id, v, low) { const el = $(id); el.querySelector('i').style.width = Math.max(0, Math.min(100, v)) + '%'; el.querySelector('b').textContent = Math.round(v); el.classList.toggle('low', low); }
 function updateHUD(dt) {
   const lobby = G.mapId === CAMP;
-  if (lobby) { $('prompt').innerHTML = onShopMat() && !shopOpen ? 'Press <span class="k">E</span> to open the SHOP' + (mobile ? ' (or tap SHOP in the panel)' : '') : ''; return; }
+  if (lobby) {
+    const mat = onShopMat() && !shopOpen;
+    $('prompt').innerHTML = mat ? (mobile ? 'Tap <span class="k">SHOP</span> to open the shop' : 'Press <span class="k">E</span> to open the SHOP') : '';
+    if (mobile) { $('hud').classList.toggle('shopmat', mat); setText($('t-act'), 'SHOP'); }
+    return;
+  }
   const t = G.clock, days = G.days, dayT = t % DAY_LEN, n0 = DAY_LEN * (1 - NIGHT_FRAC), night = dayT >= n0;
   const left = Math.max(0, Math.ceil((night ? DAY_LEN : n0) - dayT));
   const day = Math.min(days, Math.floor(t / DAY_LEN) + 1);
@@ -850,32 +910,36 @@ function updateHUD(dt) {
   let pr = '';
   const tg = target(), pl = atMyPlot();
   if (ME.faint > 0) pr = '';
-  else if (tg?.k === 'crate') pr = `<span class="k">E</span> open the <b>SUPPLY CRATE</b>`;
+  else if (tg?.k === 'crate') pr = `<span class="k">${kk('E')}</span> open the <b>SUPPLY CRATE</b>`;
   else if (tg?.k === 'node') {
     const n = tg.n, verb = n.type === 'tree' ? 'chop' : n.type === 'food' ? (n.v === 'fish' ? 'fish' : 'pick') : 'mine', what = n.type === 'tree' ? labelOf('wood') : n.type === 'rock' ? labelOf('stone') : n.type === 'gold' ? 'Gold' : labelOf('food');
     const tool = n.type === 'tree' ? 'axe' : n.type === 'food' ? null : 'pick';
-    pr = `Hold <span class="k">E</span> to ${verb} <b>${what}</b>` + (tool && !ME.tools.includes(tool) ? `<small>a ${tool === 'axe' ? 'steel axe' : 'pickaxe'} from the trading post makes this twice as fast</small>` : '');
-  } else if (tg?.k === 'drink') pr = `Hold <span class="k">E</span> to <b>drink</b> and fill your canteen`;
-  else if (tg?.k === 'trade') pr = `<span class="k">E</span> <b>TRADING POST</b><small>sell what you gathered · buy tools</small>`;
+    pr = `Hold <span class="k">${kk('E')}</span> to ${verb} <b>${what}</b>` + (tool && !ME.tools.includes(tool) ? `<small>a ${tool === 'axe' ? 'steel axe' : 'pickaxe'} from the trading post makes this twice as fast</small>` : '');
+  } else if (tg?.k === 'drink') pr = `Hold <span class="k">${kk('E')}</span> to <b>drink</b> and fill your canteen`;
+  else if (tg?.k === 'trade') pr = `<span class="k">${kk('E')}</span> <b>TRADING POST</b><small>sell what you gathered · buy tools</small>`;
   if (pl && G.state === 'play' && ME.faint <= 0 && !tradeOpen) {
     const next = ME.tier + 1;
-    const bl = next <= 5 ? `<span class="k">B</span> build a <b>${TIER_NAMES[G.mapId][next]}</b><small class="cost">${costText(TIERS[next].cost)}</small>` : `<b>${TIER_NAMES[G.mapId][ME.tier]}</b> — the best shelter there is!`;
+    const bl = next <= 5 ? `<span class="k">${kk('B')}</span> build a <b>${TIER_NAMES[G.mapId][next]}</b><small class="cost">${costText(TIERS[next].cost)}</small>` : `<b>${TIER_NAMES[G.mapId][ME.tier]}</b> — the best shelter there is!`;
     pr = pr ? pr + '<br>' + bl : bl;
   }
   $('prompt').innerHTML = tradeOpen ? '' : pr;
+  if (mobile) {
+    const lab = ME.faint > 0 ? 'USE' : tg?.k === 'node' ? ({ tree: 'CHOP', rock: 'MINE', gold: 'MINE' }[tg.n.type] || (tg.n.v === 'fish' ? 'FISH' : 'PICK')) : tg?.k === 'drink' ? 'DRINK' : tg?.k === 'trade' ? 'TRADE' : tg?.k === 'crate' ? 'OPEN' : 'USE';
+    setText($('t-act'), lab); $('t-build').classList.toggle('ready', !!pl && ME.tier < 5);
+  }
   // survival tips
   let hint = '';
   if (ME.faint > 0) { $('faint-t').textContent = `Waking up at ${ME.tier ? 'your shelter' : 'your plot'} in ${Math.ceil(ME.faint)}…`; }
-  else if (ME.water < 30) hint = ME.can > 0 ? '💧 Thirsty! Press R to sip from your canteen' : '💧 Thirsty! Find a lake and hold E to drink';
-  else if (ME.food < 30) hint = ME.inv.food > 0 ? '🍗 Hungry! Press Q to eat' : `🍗 Hungry! Gather ${labelOf('food')} or buy a ration at the trading post`;
+  else if (ME.water < 30) hint = ME.can > 0 ? `💧 Thirsty! Press ${kk('R')} to sip from your canteen` : `💧 Thirsty! Find a lake and hold ${kk('E')} to drink`;
+  else if (ME.food < 30) hint = ME.inv.food > 0 ? `🍗 Hungry! Press ${kk('Q')} to eat` : `🍗 Hungry! Gather ${labelOf('food')} or buy a ration at the trading post`;
   else if (ME.temp < 30) hint = '🥶 Freezing! Get into your shelter or next to a campfire' + (ME.tools.includes('coat') ? '' : ' — a warm coat helps');
   else if (ME.temp > 70) hint = '🥵 Too hot! Get into the shade of your shelter, or drink lots' + (ME.tools.includes('hat') ? '' : ' — a sun hat helps');
   else if (load >= ME.cap) hint = '🎒 Your pack is full — sell things at the trading post, or build!';
-  else if (ME.tier === 0 && ME.inv.wood >= 6) hint = '🏠 You have enough wood for a shelter — go to your flag and press B';
+  else if (ME.tier === 0 && ME.inv.wood >= 6) hint = `🏠 You have enough wood for a shelter — go to your flag and press ${kk('B')}`;
   $('hint').textContent = hint;
   $('keys').textContent = 'WASD move · Mouse look · E/hold click use · Q eat · R sip · B build · F bonk · Tab scores · T chat · Esc menu';
   // scoreboard
-  const showBoard = keys.has('Tab');
+  const showBoard = keys.has('Tab') || touch.board;
   $('board').classList.toggle('hidden', !showBoard);
   if (showBoard) $('board').innerHTML = `<table><tr><th>GOOGLY</th><th class="r">MONEY</th><th>SHELTER</th><th class="r">FAINTS</th><th class="r">❤️</th></tr>${rows.map(e => `<tr class="${e.id === myId ? 'me' : ''}"><td><span class="dot" style="background:${esc(e.color)}"></span> ${esc(e.name)}${e.bot ? ' <small>(CPU)</small>' : ''}</td><td class="r">$${e.money}</td><td>${TIER_NAMES[G.mapId][e.tier]}</td><td class="r">${e.faints}</td><td class="r">${e.hp}</td></tr>`).join('')}</table><p class="tiny">${BIOME_LIST[G.mapId].name} · ${local ? 'solo game' : 'lobby ' + esc(room?.code || '')} · money counts what you carry at today's prices</p>`;
 }

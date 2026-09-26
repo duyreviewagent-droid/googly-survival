@@ -53,9 +53,11 @@ export class World {
   constructor(canvas) {
     this.lq = /lq=1/.test(location.search);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !this.lq, powerPreference: 'high-performance', preserveDrawingBuffer: /shot|icon/.test(location.search) });
-    this.renderer.setPixelRatio(this.lq ? 0.6 : Math.min(devicePixelRatio, 2));
+    // phones: fewer pixels and a smaller, harder-edged shadow map keep the frame rate up
+    this.mobile = matchMedia('(pointer: coarse)').matches && 'ontouchstart' in window;
+    this.renderer.setPixelRatio(this.lq ? 0.6 : Math.min(devicePixelRatio, this.mobile ? 1.5 : 2));
     this.renderer.shadowMap.enabled = !this.lq;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = this.mobile ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.0;
     this.scene = new THREE.Scene();
@@ -67,7 +69,7 @@ export class World {
     // lights that live across maps
     this.hemi = new THREE.HemisphereLight(0xcfe6ff, 0x5a4a3a, 1.1); this.scene.add(this.hemi);
     this.sun = new THREE.DirectionalLight(0xfff2dc, 2.6);
-    this.sun.castShadow = true; this.sun.shadow.mapSize.set(2048, 2048);
+    this.sun.castShadow = true; this.sun.shadow.mapSize.set(this.mobile ? 1024 : 2048, this.mobile ? 1024 : 2048);
     const sc = this.sun.shadow.camera; sc.left = -38; sc.right = 38; sc.top = 38; sc.bottom = -38; sc.near = 1; sc.far = 220;
     this.sun.shadow.bias = -0.0006; this.sun.shadow.normalBias = 0.04;
     this.scene.add(this.sun); this.scene.add(this.sun.target);
@@ -77,6 +79,8 @@ export class World {
     this.nightK = 0; this.stormK = 0; this.stormWant = 0; this.flashT = 0;
     this.resize();
     addEventListener('resize', () => this.resize());
+    addEventListener('orientationchange', () => setTimeout(() => this.resize(), 300));
+    window.visualViewport?.addEventListener('resize', () => this.resize());
     new ResizeObserver(() => this.resize()).observe(canvas);
   }
   resize() {

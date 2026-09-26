@@ -218,3 +218,147 @@ button.blue { background: #2a6ad8; }
 body.mobile #bars { bottom: 260px; } body.mobile #tools { bottom: 390px; } body.mobile #pack { bottom: auto; top: 64px; }
 @media (max-width: 720px) { #minimap { display: none; } #lead { top: 64px; } #bars { width: 200px; } #pack { gap: 7px; font-size: 13px; } }
 .vols { display: grid; gap: 6px; margin: 8px auto; max-width: 340px; } .vols label { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-weight: 800; font-size: 14px; } .vols input { width: 170px; }
+
+/* ================================================================ phones & tablets (body.mobile = a touch screen)
+   Desktop and the Mac app never get body.mobile, so none of this changes them. */
+.touchonly { display: none; }
+body.mobile .kbonly { display: none !important; }
+body.mobile span.touchonly { display: inline; } body.mobile p.touchonly { display: block; }
+body.mobile {
+  --sl: max(8px, env(safe-area-inset-left)); --sr: max(8px, env(safe-area-inset-right));
+  --st: max(6px, env(safe-area-inset-top)); --sb: max(8px, env(safe-area-inset-bottom));
+  position: fixed; inset: 0; overscroll-behavior: none; -webkit-text-size-adjust: 100%;
+}
+body.mobile #view { width: 100%; height: 100%; touch-action: none; }
+body.mobile button { touch-action: manipulation; min-height: 44px; }
+body.mobile input, body.mobile select { font-size: 16px; min-height: 44px; }   /* 16px: iOS won't zoom in on focus */
+body.mobile input { -webkit-user-select: text; user-select: text; }
+body.mobile input[type=checkbox] { min-height: 0; width: 24px; height: 24px; }
+body.mobile input[type=range] { min-height: 32px; touch-action: pan-x; }
+/* menus: fit the screen, scroll inside the card */
+body.mobile .screen { padding: var(--st) var(--sr) var(--sb) var(--sl); }
+body.mobile .card { max-height: 100%; overflow-y: auto; touch-action: pan-y; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+body.mobile #rooms, body.mobile #shop-grid, body.mobile #lb-log, body.mobile .lp { touch-action: pan-y; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+body.mobile button.mini { min-height: 36px; min-width: 40px; }
+body.mobile #scr-title .row button { min-height: 40px; }
+body.mobile .trow button { min-height: 40px; padding: 6px 10px; }
+body.mobile #toast { top: calc(var(--st) + 96px); font-size: 13px; padding: 8px 14px; max-width: min(520px, 70vw); }
+/* touch controls */
+body.mobile #tbar { display: flex; gap: 6px; position: absolute; right: calc(var(--sr) + 96px); top: var(--st); pointer-events: auto; }
+#tbar button { width: 44px; height: 44px; padding: 0; font-size: 20px; border-radius: 12px; opacity: .9; background: #000a; border-color: #ffffff66; }
+#tbar button.on, .tbtn.on { background: #2f9e4a; border-color: #fff; }
+.tbtn { touch-action: none; -webkit-user-select: none; user-select: none; box-shadow: 0 3px 10px #0007; }
+.tbtn.held { transform: scale(.92); filter: brightness(1.3); }
+#t-build.ready { box-shadow: 0 0 16px #ffd23a; border-color: #ffe07a; }
+body.mobile #stick { left: calc(var(--sl) + 12px); bottom: calc(var(--sb) + 8px); width: 128px; height: 128px; touch-action: none; }
+body.mobile #knob { left: 31%; top: 31%; width: 38%; height: 38%; pointer-events: none; }
+body.mobile .tbtn { width: 56px; height: 56px; font-size: 12px; min-height: 0; }
+body.mobile #t-act { right: calc(var(--sr) + 10px); bottom: calc(var(--sb) + 12px); width: 88px; height: 88px; font-size: 16px; }
+body.mobile #t-jump { right: calc(var(--sr) + 108px); bottom: calc(var(--sb) + 8px); width: 64px; height: 64px; }
+body.mobile #t-eat { right: calc(var(--sr) + 104px); bottom: calc(var(--sb) + 84px); }
+body.mobile #t-sip { right: calc(var(--sr) + 52px); bottom: calc(var(--sb) + 116px); }
+body.mobile #t-bonk { right: calc(var(--sr) + 0px); bottom: calc(var(--sb) + 116px); width: 50px; height: 50px; font-size: 11px; }
+body.mobile #t-build { right: calc(var(--sr) + 182px); bottom: calc(var(--sb) + 10px); width: 60px; height: 60px; }
+body.mobile #t-run { left: calc(var(--sl) + 146px); bottom: calc(var(--sb) + 10px); width: 50px; height: 50px; font-size: 11px; }
+/* HUD: compact, tucked into the corners away from the thumbs */
+body.mobile .pill { border-radius: 10px; }
+body.mobile #money { left: var(--sl); top: var(--st); padding: 3px 10px; } body.mobile .cash { font-size: 18px; }
+body.mobile #tools { left: calc(var(--sl) + 84px); top: var(--st); bottom: auto; font-size: 15px; }
+body.mobile #tools span { padding: 2px 4px; }
+body.mobile #bars { left: var(--sl); top: calc(var(--st) + 38px); bottom: auto; width: 168px; padding: 4px 8px; }
+body.mobile .bar { gap: 5px; margin: 1px 0; } body.mobile .bar span { width: 16px; font-size: 12px; } body.mobile .bar b { width: 36px; font-size: 11px; }
+body.mobile .bar div { height: 8px; }
+body.mobile #daypill { top: var(--st); padding: 3px 12px 5px; min-width: 110px; } body.mobile #daypill small { font-size: 9px; letter-spacing: 1px; } body.mobile #daypill b { font-size: 17px; }
+body.mobile #pack { top: calc(var(--st) + 52px); bottom: auto; gap: 7px; padding: 3px 10px; font-size: 11px; } body.mobile #pack .it { min-width: 28px; } body.mobile #pack .it b { font-size: 12px; } body.mobile #pack .it small { font-size: 7px; letter-spacing: .5px; } body.mobile #pack .cap { font-size: 10px; padding-left: 6px; }
+body.mobile #minimap { display: block; right: var(--sr); top: var(--st); padding: 3px; } body.mobile #mm { width: 86px; height: 86px; border-radius: 7px; }
+body.mobile #lead { display: none; }
+body.mobile #storm { top: calc(var(--st) + 92px); font-size: 12px; padding: 4px 10px; }
+body.mobile #hint { left: 50%; transform: translateX(-50%); top: calc(var(--st) + 160px); bottom: auto; max-width: min(420px, 56vw); font-size: 12px; text-align: center; }
+body.mobile #feed { right: var(--sr); top: calc(var(--st) + 100px); max-width: 30vw; } body.mobile #feed div { font-size: 11px; padding: 3px 8px; }
+body.mobile #prompt { top: 56%; font-size: 15px; max-width: 46vw; } body.mobile #prompt small { font-size: 11px; } body.mobile #prompt .k { font-size: 13px; padding: 1px 6px; } body.mobile #prompt .cost { font-size: 12px; }
+body.mobile #center { top: 26%; font-size: clamp(22px, 4.6vw, 40px); } body.mobile #center small { font-size: 13px; }
+body.mobile #chatbox { display: block; left: var(--sl); top: calc(var(--st) + 128px); bottom: auto; width: min(300px, 34vw); }
+body.mobile #log { font-size: 11px; max-height: 84px; }
+body.mobile #board { padding: 8px 10px; max-height: 76%; overflow: auto; font-size: 12px; } body.mobile #board td, body.mobile #board th { padding: 3px 6px; }
+body.mobile #faint div { font-size: 54px; } body.mobile #faint h2 { font-size: 30px; }
+body.mobile #saved { top: calc(var(--st) + 118px); }
+/* what shows at Base Camp */
+#hud.lobby #t-build, #hud.lobby #t-board, #hud.lobby #t-run { display: none !important; }
+body.mobile #hud.lobby.shopmat #t-act { display: block !important; }
+body.mobile #lb-show { right: auto; left: var(--sl); top: var(--st); }
+body.mobile #lobbyui:not(.collapsed):not(.hidden) ~ #hud #t-jump, body.mobile #lobbyui:not(.collapsed):not(.hidden) ~ #hud #t-act { right: calc(min(360px, 48vw) + var(--sr) + 14px); }
+body.mobile #lobbyui:not(.collapsed):not(.hidden) ~ #hud #tbar { display: none; }
+body.mobile .lp { right: var(--sr); top: var(--st); bottom: var(--sb); height: auto; width: min(360px, 48vw); padding: 10px 12px; border-radius: 16px; }
+body.mobile .bigcode { font-size: 32px; letter-spacing: 6px; }
+body.mobile #lb-log { height: 70px; }
+body.mobile .grid2 { gap: 6px; }
+body.mobile #lb-start { padding: 8px 20px; }
+body.mobile #hud.lobby #prompt { left: 50%; }
+/* trading post: left side, scrolls */
+body.mobile #trade { padding: var(--st) var(--sr) var(--sb) var(--sl); align-items: stretch; }
+body.mobile .tradecard { max-width: 460px; padding: 12px 14px; max-height: 100%; }
+body.mobile .trow { padding: 4px 8px; font-size: 14px; gap: 6px; }
+
+/* landscape phone: short screen → tight menus */
+@media (orientation: landscape) {
+  body.mobile .card { padding: 12px 16px; border-radius: 16px; }
+  body.mobile h2 { font-size: 22px; margin-bottom: 4px; }
+  body.mobile .sub { margin: 4px 0 8px; font-size: 13px; }
+  body.mobile .row { margin-top: 8px; }
+  body.mobile button.big { font-size: 17px; padding: 8px 20px; } body.mobile button.big small { font-size: 10px; }
+  body.mobile .label { margin: 6px 0 4px; }
+  /* title: two columns so PLAY SOLO is on screen without scrolling */
+  body.mobile #scr-title { justify-content: center; padding-left: var(--sl); background: radial-gradient(#10281caa, #040c08dd); }
+  body.mobile #scr-title .card { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 780px; align-items: center; padding: 12px 16px; }
+  body.mobile #scr-title h1 { font-size: 30px; }
+  body.mobile #scr-title .sub { font-size: 12px; }
+  body.mobile #scr-title .coinrow { margin-top: 0; padding: 4px 6px 4px 12px; }
+  body.mobile #scr-title button.wide { margin-top: 8px; }
+  body.mobile #scr-title #swatches div { width: 32px; height: 32px; }
+  body.mobile .maps .mapc { padding: 6px 4px; font-size: 12px; } body.mobile .maps .mapc .em { font-size: 26px; } body.mobile .maps .mapc small { display: none; }
+  body.mobile .grid3 { grid-template-columns: repeat(4, 1fr); margin: 8px 0 2px; }
+  body.mobile #scr-shop .card { max-width: 440px; } body.mobile #shop-grid { grid-template-columns: repeat(4, 1fr); max-height: none; overflow: visible; }
+  body.mobile .item { padding: 6px 4px; } body.mobile .item .em { font-size: 26px; height: 34px; line-height: 34px; } body.mobile .item i.sk { width: 34px; height: 34px; }
+  body.mobile #rooms { max-height: none; }
+  body.mobile .help p { font-size: 13px; margin: 6px 0; }
+  body.mobile #end-awards .award { padding: 4px 10px; font-size: 13px; } body.mobile .award .em { font-size: 20px; }
+  body.mobile .stand { padding: 4px 10px; }
+  body.mobile #scr-pause .tiny { margin: 0 0 4px; } body.mobile #scr-pause .slider { margin: 2px 0; } body.mobile #scr-pause .chk { margin-top: 2px; }
+  body.mobile #scr-pause .vols { gap: 0; margin: 2px auto; } body.mobile #scr-pause .card { max-width: 620px; }
+  body.mobile #scr-pause .row { margin-top: 6px; } body.mobile #scr-pause .row button { min-height: 40px; padding: 6px 12px; }
+}
+.tcol { display: contents; }
+body.mobile #scr-title .tcol { display: block; }
+@media (orientation: portrait) {
+  body.mobile #scr-title .tcol { display: contents; }
+  body.mobile #scr-title .card { padding: 16px; }
+  body.mobile #scr-title h1 { font-size: clamp(26px, 8.4vw, 40px); white-space: normal; }
+  /* HUD rows: money · day · map, then bars + buttons, then the backpack */
+  body.mobile #tbar { right: var(--sr); top: calc(var(--st) + 98px); }
+  body.mobile #pack { top: calc(var(--st) + 168px); max-width: calc(100vw - 16px); }
+  body.mobile #storm { top: calc(var(--st) + 210px); }
+  body.mobile #hint { top: calc(var(--st) + 242px); max-width: 80vw; }
+  body.mobile #feed { top: calc(var(--st) + 210px); max-width: 44vw; }
+  body.mobile #chatbox { top: auto; bottom: calc(var(--sb) + 206px); width: 56vw; }
+  body.mobile #toast { top: calc(var(--st) + 314px); max-width: 90vw; }
+  body.mobile #tools { left: var(--sl); top: calc(var(--st) + 136px); font-size: 13px; }
+  body.mobile #prompt { top: 52%; max-width: 88vw; }
+  body.mobile #saved { top: calc(var(--st) + 124px); }
+  body.mobile #t-act { bottom: calc(var(--sb) + 20px); }
+  body.mobile #t-jump { right: calc(var(--sr) + 106px); bottom: calc(var(--sb) + 6px); }
+  body.mobile #t-eat { right: calc(var(--sr) + 102px); bottom: calc(var(--sb) + 82px); }
+  body.mobile #t-sip { right: calc(var(--sr) + 48px); bottom: calc(var(--sb) + 124px); }
+  body.mobile #t-bonk { right: calc(var(--sr) + 0px); bottom: calc(var(--sb) + 124px); }
+  body.mobile #t-build { right: calc(var(--sr) + 158px); bottom: calc(var(--sb) + 140px); }
+  body.mobile #t-run { left: calc(var(--sl) + 12px); bottom: calc(var(--sb) + 146px); }
+  /* lobby panel on top, the stick stays free below it */
+  body.mobile .lp { top: var(--st); bottom: auto; height: 56%; width: auto; left: var(--sl); }
+  body.mobile #lobbyui:not(.collapsed):not(.hidden) ~ #hud #t-jump, body.mobile #lobbyui:not(.collapsed):not(.hidden) ~ #hud #t-act { right: calc(var(--sr) + 10px); }
+  body.mobile #lobbyui:not(.collapsed):not(.hidden) ~ #hud #t-jump { right: calc(var(--sr) + 108px); }
+  body.mobile #trade { align-items: center; justify-content: center; }
+  body.mobile #scr-end .card { padding: 14px 10px; }
+  body.mobile .stand { grid-template-columns: 20px minmax(0, 1fr) 46px 70px 18px 36px; gap: 4px; padding: 5px 6px; font-size: 12px; }
+  body.mobile .stand .n { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: block; }
+  body.mobile .stand .n .dot { vertical-align: -2px; margin-right: 4px; }
+  body.mobile .stand .home { font-size: 11px; line-height: 1.1; } body.mobile .stand .home small { display: none; }
+}
